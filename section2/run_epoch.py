@@ -24,7 +24,7 @@ class GPT_2(nn.Module):
         self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=1024, nhead=8), 1)
         self.linear = nn.Linear(1024, vocab_size)
 
-    def forward(self, src, trg, device):
+    def forward(self, src, trg):
         embs_src = self.embedding(src)
         embs_src = self.positional(embs_src)
         embs_trg = self.embedding(trg)

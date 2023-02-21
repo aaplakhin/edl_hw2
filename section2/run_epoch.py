@@ -25,24 +25,25 @@ def yield_tokens(data_iter):
 
 
 def run_epoch(data_mode: DataMode) -> None:
-    for batch_type in data_mode:
-        if batch_type.name == 'BRAIN':
-            dataset = BrainDataset("wikitext-103/wiki.train.tokens")
-        elif batch_type.name == 'BIG_BRAIN':
-            dataset = BigBrainDataset("wikitext-103/wiki.train.tokens")
-        else:
-            pass
+    if data_mode.name == 'BRAIN':
+        dataset = BrainDataset("wikitext-103/wiki.train.tokens")
+    elif data_mode.name == 'BIG_BRAIN':
+        dataset = BigBrainDataset("wikitext-103/wiki.train.tokens")
+    else:
+        pass
+    print(data_mode.name)
+    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>"])
+    vocab.set_default_index(vocab["<unk>"])
 
-        vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>"])
-        vocab.set_default_index(vocab["<unk>"])
+    text_pipeline = lambda x: vocab(x)
+    print(data_mode.name)
+    collate_fn = MyCollator(text_pipeline)
 
-        text_pipeline = lambda x: vocab(x)
+    if data_mode.name == 'BRAIN':
+        dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+    elif data_mode.name == 'BIG_BRAIN':
+        dataloader = DataLoader(dataset, batch_size=16, collate_fn=collate_fn, shuffle=True)
+    else:
+        pass
 
-        collate_fn = MyCollator(text_pipeline)
-
-        if batch_type.name == 'BRAIN':
-            dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-        elif batch_type.name == 'BIG_BRAIN':
-            dataloader = DataLoader(dataset, batch_size=16, collate_fn=collate_fn, shuffle=True)
-        else:
-            pass
+    return dataloader

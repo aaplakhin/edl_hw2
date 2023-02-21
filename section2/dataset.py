@@ -28,6 +28,9 @@ class BrainDataset(Dataset):
 
         self.data = data
 
+    def __len__(self):
+        return len(self.data)
+
     def __getitem__(self, idx: int):
         return self.data[idx]
 
@@ -49,6 +52,9 @@ class BigBrainDataset(Dataset):
                     data.append(tokens)
 
         self.data = data
+
+    def __len__(self):
+        return len(self.data)
 
     def __getitem__(self, idx: int):
         return self.data[idx]

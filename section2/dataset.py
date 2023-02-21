@@ -22,8 +22,8 @@ class BrainDataset(Dataset):
                 line = line.strip()
                 if line and line[0] != "=":
                     tokens = tokenizer(line)
-                    tokens = tokens[:self.max_length]
-                    tokens += ['<unk>'] * (self.max_length - len(tokens))
+                    tokens = tokens[:self.max_length - 1]
+                    tokens += ['<unk>'] * (self.max_length - len(tokens) + 1)
                     data.append(['<sos>'] + tokens + ['<eos>'])
 
         self.data = data
@@ -48,7 +48,7 @@ class BigBrainDataset(Dataset):
                 line = line.strip()
                 if line and line[0] != "=":
                     tokens = tokenizer(line)
-                    tokens = tokens[:self.max_length]
+                    tokens = tokens[:self.max_length - 1]
                     data.append(['<sos>'] + tokens + ['<eos>'])
 
         self.data = data

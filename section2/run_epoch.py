@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 
 from dataset import BrainDataset, BigBrainDataset, UltraDuperBigBrainDataset, MyCollator
 from transformer import PositionalEncoding
+from Tra
 
 
 class DataMode(Enum):
@@ -22,15 +23,12 @@ class GPT_2(nn.Module):
         self.embedding = nn.Embedding(vocab_size, 1024)
         self.positional = PositionalEncoding(1024)
         self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=1024, nhead=8), 1)
-        self.linear = nn.Linear(1024, vocab_size)
 
-    def forward(self, src, trg):
+    def forward(self, src, mask):
         embs_src = self.embedding(src)
         embs_src = self.positional(embs_src)
-        embs_trg = self.embedding(trg)
-        embs_trg = self.positional(embs_trg)
 
-        att = self.decoder(embs_src, embs_trg)
+        att = self.decoder(embs_src, embs_src, mask)
         return self.linear(att)
 
 
@@ -48,7 +46,7 @@ def run_epoch(data_mode: DataMode):
         pass
     print(data_mode.name)
 
-    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", ",<eos>"])
+    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", ",<eos>"], max_tokens=20000)
     vocab.set_default_index(vocab["<unk>"])
     vocab.set_default_index(vocab["<sos>"])
     vocab.set_default_index(vocab["<eos>"])

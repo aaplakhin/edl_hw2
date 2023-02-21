@@ -8,7 +8,6 @@ from torch.utils.data import DataLoader
 from dataset import BrainDataset, BigBrainDataset, UltraDuperBigBrainDataset, MyCollator
 
 
-
 class DataMode(Enum):
     BRAIN = 1
     BIG_BRAIN = 2
@@ -32,18 +31,16 @@ def run_epoch(data_mode: DataMode) -> None:
     else:
         pass
     print(data_mode.name)
-    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>"])
+
+    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", ",<eos>"])
     vocab.set_default_index(vocab["<unk>"])
+    vocab.set_default_index(vocab["<sos>"])
+    vocab.set_default_index(vocab["<eos>"])
 
     text_pipeline = lambda x: vocab(x)
     print(data_mode.name)
     collate_fn = MyCollator(text_pipeline)
 
-    if data_mode.name == 'BRAIN':
-        dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-    elif data_mode.name == 'BIG_BRAIN':
-        dataloader = DataLoader(dataset, batch_size=16, collate_fn=collate_fn, shuffle=True)
-    else:
-        pass
+    dataloader = DataLoader(dataset, batch_size=16, collate_fn=collate_fn, shuffle=True)
 
     return dataloader

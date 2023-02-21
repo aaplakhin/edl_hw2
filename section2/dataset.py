@@ -24,7 +24,7 @@ class BrainDataset(Dataset):
                     tokens = tokenizer(line)
                     tokens = tokens[:self.max_length]
                     tokens += ['<unk>'] * (self.max_length - len(tokens))
-                    data.append(tokens)
+                    data.append(['<start>'] + tokens + ['<end>'])
 
         self.data = data
 
@@ -49,7 +49,7 @@ class BigBrainDataset(Dataset):
                 if line and line[0] != "=":
                     tokens = tokenizer(line)
                     tokens = tokens[:self.max_length]
-                    data.append(tokens)
+                    data.append(['<start>'] + tokens + ['<end>'])
 
         self.data = data
 
@@ -69,7 +69,7 @@ class UltraDuperBigBrainDataset(Dataset):
 
 
 class MyCollator(object):
-    def __init__(self, text_pipeline):
+    def __init__(self, text_pipeline, batch_type):
         self.text_pipeline = text_pipeline
 
     def __call__(self, batch):
@@ -79,4 +79,4 @@ class MyCollator(object):
             text_list.append(processed_text)
 
         text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True, padding_value=0)
-        return text_list, text_list[:,1:]
+        return text_list[:, :-1], text_list[:, 1:]

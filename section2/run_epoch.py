@@ -65,8 +65,8 @@ def run_epoch(data_mode: DataMode):
     model.eval()
 
     for src, trg in dataloader:
-        src.to(device)
-        trg.to(device)
+        src = src.to(device)
+        trg = trg.to(device)
 
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)

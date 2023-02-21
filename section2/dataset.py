@@ -1,26 +1,57 @@
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import torch
-from torch.utils.data.dataset import Dataset
 
+from torch import nn
+from torch.utils.data.dataset import Dataset
+from torchtext.data.utils import get_tokenizer
 
 MAX_LENGTH = 640
 
 
 class BrainDataset(Dataset):
     def __init__(self, data_path: str, max_length: int = MAX_LENGTH):
-        pass
+        self.max_length = max_length
+
+        tokenizer = get_tokenizer("basic_english")
+
+        data = []
+
+        with open(data_path, "r") as file:
+            for line in file.read().splitlines():
+                line = line.strip()
+                if line and line[0] != "=":
+                    tokens = tokenizer(line)
+                    tokens = tokens[:self.max_length]
+                    tokens += ['<unk>'] * (self.max_length - len(tokens))
+                    data.append(tokens)
+
+        self.data = data
 
     def __getitem__(self, idx: int):
-        pass
+        return self.data[idx]
 
 
 class BigBrainDataset(Dataset):
     def __init__(self, data_path: str, max_length: int = MAX_LENGTH):
-        pass
+        self.max_length = max_length
+
+        tokenizer = get_tokenizer("basic_english")
+
+        data = []
+
+        with open(data_path, "r") as file:
+            for line in file.read().splitlines():
+                line = line.strip()
+                if line and line[0] != "=":
+                    tokens = tokenizer(line)
+                    tokens = tokens[:self.max_length]
+                    data.append(tokens)
+
+        self.data = data
 
     def __getitem__(self, idx: int):
-        pass
+        return self.data[idx]
 
 
 class UltraDuperBigBrainDataset(Dataset):
@@ -31,13 +62,15 @@ class UltraDuperBigBrainDataset(Dataset):
         pass
 
 
-def collate_fn(
-    batch: list[tuple[str, torch.Tensor]], max_length: Optional[int] = MAX_LENGTH
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Pad each sequence of the incoming sequences list
-    :param batch: a list of the objects received from the dataset by __getitem__
-    :param max_length: maximum sequence length to pad to (for "Brain" approach only)
-    :return: tuple of padded sequences and corresponding training targets
-    """
-    pass
+class MyCollator(object):
+    def __init__(self, text_pipeline):
+        self.text_pipeline = text_pipeline
+
+    def __call__(self, batch):
+        text_list = []
+        for text in batch:
+            processed_text = torch.tensor(self.text_pipeline(text), dtype=torch.int64)
+            text_list.append(processed_text)
+
+        text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True, padding_value=0)
+        return text_list

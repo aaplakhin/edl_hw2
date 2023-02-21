@@ -24,10 +24,9 @@ class GPT_2(nn.Module):
         self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=1024, nhead=8), 1)
         self.linear = nn.Linear(1024, vocab_size)
 
-    def forward(self, src, trg):
+    def forward(self, src, trg, device):
         embs_src = self.embedding(src)
         embs_src = self.positional(embs_src)
-
         embs_trg = self.embedding(trg)
         embs_trg = self.positional(embs_trg)
 
@@ -62,9 +61,7 @@ def run_epoch(data_mode: DataMode):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    model = GPT_2(len(vocab))
-
-    model.to(device)
+    model = GPT_2(len(vocab)).to(device)
     model.eval()
 
     for src, trg in dataloader:

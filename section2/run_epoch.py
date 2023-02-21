@@ -59,7 +59,7 @@ def run_epoch(data_mode: DataMode):
 
     dataloader = DataLoader(dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = GPT_2(len(vocab)).to(device)
     model.eval()

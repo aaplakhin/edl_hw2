@@ -79,4 +79,4 @@ class MyCollator(object):
             text_list.append(processed_text)
 
         text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True, padding_value=0)
-        return text_list
+        return text_list, text_list[:,1:]

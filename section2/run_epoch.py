@@ -54,7 +54,7 @@ def run_epoch(data_mode: DataMode, n_bins: int = 1):
     vocab.set_default_index(vocab["<sos>"])
     vocab.set_default_index(vocab["<eos>"])
 
-    BATCH_SIZE = 16
+    BATCH_SIZE = 128
 
     text_pipeline = lambda x: vocab(x)
 

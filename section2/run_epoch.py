@@ -2,13 +2,13 @@ from enum import Enum
 
 import torch
 
+from tqdm import tqdm
 from torch import nn
 from torchtext.vocab import build_vocab_from_iterator
 from torch.utils.data import DataLoader
 
 from dataset import BrainDataset, BigBrainDataset, UltraDuperBigBrainDataset, MyCollator
 from transformer import PositionalEncoding
-from Tra
 
 
 class DataMode(Enum):
@@ -24,12 +24,15 @@ class GPT_2(nn.Module):
         self.positional = PositionalEncoding(1024)
         self.decoder = nn.TransformerDecoder(nn.TransformerDecoderLayer(d_model=1024, nhead=8), 1)
 
-    def forward(self, src, mask):
-        embs_src = self.embedding(src)
-        embs_src = self.positional(embs_src)
+    def forward(self, tgt, src, src_mask, tgt_mask):
+        embs_tgt = self.embedding(tgt)
+        embs_tgt = self.positional(embs_tgt)
 
-        att = self.decoder(embs_src, embs_src, mask)
-        return self.linear(att)
+        embs_src = self.embedding(src)
+        memory = self.positional(embs_src)
+
+        att = self.decoder(embs_tgt, memory, tgt_key_padding_mask=tgt_mask, memory_key_padding_mask=src_mask)
+        return att
 
 
 def yield_tokens(data_iter):
@@ -46,33 +49,43 @@ def run_epoch(data_mode: DataMode):
         pass
     print(data_mode.name)
 
-    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", ",<eos>"], max_tokens=20000)
+    vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", "<eos>", '<pad>'])
+    vocab.set_default_index(vocab["<pad>"])
     vocab.set_default_index(vocab["<unk>"])
     vocab.set_default_index(vocab["<sos>"])
     vocab.set_default_index(vocab["<eos>"])
 
+    BATCH_SIZE = 16
+
     text_pipeline = lambda x: vocab(x)
 
-    collate_fn = MyCollator(text_pipeline)
+    collate_fn = MyCollator(text_pipeline, vocab["<pad>"])
 
-    dataloader = DataLoader(dataset, batch_size=4, collate_fn=collate_fn, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn, shuffle=True)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model = GPT_2(len(vocab)).to(device)
     model.eval()
 
-    for src, trg in dataloader:
+    brain_times = []
+
+    for i, (src, tgt) in enumerate(tqdm(dataloader)):
         src = src.to(device)
-        trg = trg.to(device)
+        tgt = tgt.to(device)
 
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
 
+        src_pad_mask = (src == vocab["<pad>"]).view(src.shape[1], BATCH_SIZE)
+        tgt_pad_mask = (src == vocab["<pad>"]).view(tgt.shape[1], BATCH_SIZE)
+
         start.record()
-        model(src, trg)
+        model(tgt, src, tgt_pad_mask, src_pad_mask)
         end.record()
 
         torch.cuda.synchronize()
+
+        brain_times.append(start.elapsed_time(end))
 
     return {"type": "Brain", "time": start.elapsed_time(end)}

@@ -22,9 +22,9 @@ class BrainDataset(Dataset):
                 line = line.strip()
                 if line and line[0] != "=":
                     tokens = tokenizer(line)
-                    tokens = tokens[:self.max_length - 1]
-                    tokens += ['<unk>'] * (self.max_length - len(tokens) + 1)
-                    data.append(['<sos>'] + tokens + ['<eos>'])
+                    tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
+                    tokens += ['<pad>'] * (self.max_length - len(tokens) + 1)
+                    data.append(tokens)
 
         self.data = data
 
@@ -44,12 +44,12 @@ class BigBrainDataset(Dataset):
         data = []
 
         with open(data_path, "r") as file:
-            for line in file.read().splitlines():
+            for i, line in enumerate(file.read().splitlines()):
                 line = line.strip()
                 if line and line[0] != "=":
                     tokens = tokenizer(line)
-                    tokens = tokens[:self.max_length - 1]
-                    data.append(['<sos>'] + tokens + ['<eos>'])
+                    tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
+                    data.append(tokens)
 
         self.data = data
 
@@ -69,8 +69,9 @@ class UltraDuperBigBrainDataset(Dataset):
 
 
 class MyCollator(object):
-    def __init__(self, text_pipeline):
+    def __init__(self, text_pipeline, pad_num):
         self.text_pipeline = text_pipeline
+        self.pad_num = pad_num
 
     def __call__(self, batch):
         text_list = []
@@ -78,5 +79,5 @@ class MyCollator(object):
             processed_text = torch.tensor(self.text_pipeline(text), dtype=torch.int64)
             text_list.append(processed_text)
 
-        text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True, padding_value=0)
+        text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True, padding_value=self.pad_num)
         return text_list[:, :-1], text_list[:, 1:]

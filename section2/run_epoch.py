@@ -77,8 +77,8 @@ def run_epoch(data_mode: DataMode):
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
 
-        src_pad_mask = (src == vocab["<pad>"]).view(src.shape[1], BATCH_SIZE)
-        tgt_pad_mask = (src == vocab["<pad>"]).view(tgt.shape[1], BATCH_SIZE)
+        src_pad_mask = (src == vocab["<pad>"]).view(src.shape[1], src.shape[0])
+        tgt_pad_mask = (src == vocab["<pad>"]).view(tgt.shape[1], tgt.shape[0])
 
         start.record()
         model(tgt, src, tgt_pad_mask, src_pad_mask)

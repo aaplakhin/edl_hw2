@@ -91,4 +91,7 @@ def run_epoch(data_mode: DataMode, n_bins: int = 1):
 
         brain_times.append(start.elapsed_time(end))
 
-    return {"type": "Brain", "time": start.elapsed_time(end)}
+    if data_mode.name in ['BRAIN', 'BIG_BRAIN']:
+        return {"type": data_mode.name, "time": brain_times}
+    else:
+        return {"type": data_mode.name + str(n_bins), "time": brain_times}

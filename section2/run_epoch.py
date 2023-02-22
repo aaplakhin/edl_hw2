@@ -42,12 +42,11 @@ def yield_tokens(data_iter):
 
 def run_epoch(data_mode: DataMode, n_bins: int = 1):
     if data_mode.name == 'BRAIN':
-        dataset = BrainDataset("wikitext-103/wiki.valid.tokens", "wikitext-103/wiki.test.tokens")
+        dataset = BrainDataset("wikitext-103/wiki.train.tokens")
     elif data_mode.name == 'BIG_BRAIN':
-        dataset = BigBrainDataset("wikitext-103/wiki.valid.tokens", "wikitext-103/wiki.test.tokens")
+        dataset = BigBrainDataset("wikitext-103/wiki.train.tokens")
     else:
-        dataset = UltraDuperBigBrainDataset("wikitext-103/wiki.valid.tokens",
-                                            "wikitext-103/wiki.test.tokens", n_bins=n_bins)
+        dataset = UltraDuperBigBrainDataset("wikitext-103/wiki.train.tokens", n_bins=n_bins)
 
     vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", "<eos>", '<pad>'])
     vocab.set_default_index(vocab["<pad>"])

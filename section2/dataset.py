@@ -12,14 +12,23 @@ MAX_LENGTH = 640
 
 
 class BrainDataset(Dataset):
-    def __init__(self, data_path: str, max_length: int = MAX_LENGTH):
+    def __init__(self, data_path_1: str, data_path_2: str, max_length: int = MAX_LENGTH):
         self.max_length = max_length
 
         tokenizer = get_tokenizer("basic_english")
 
         data = []
 
-        with open(data_path, "r") as file:
+        with open(data_path_1, "r") as file:
+            for line in file.read().splitlines():
+                line = line.strip()
+                if line and line[0] != "=":
+                    tokens = tokenizer(line)
+                    tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
+                    tokens += ['<pad>'] * (self.max_length - len(tokens) + 1)
+                    data.append(tokens)
+
+        with open(data_path_2, "r") as file:
             for line in file.read().splitlines():
                 line = line.strip()
                 if line and line[0] != "=":
@@ -38,14 +47,22 @@ class BrainDataset(Dataset):
 
 
 class BigBrainDataset(Dataset):
-    def __init__(self, data_path: str, max_length: int = MAX_LENGTH):
+    def __init__(self, data_path_1: str, data_path_2: str, max_length: int = MAX_LENGTH):
         self.max_length = max_length
 
         tokenizer = get_tokenizer("basic_english")
 
         data = []
 
-        with open(data_path, "r") as file:
+        with open(data_path_1, "r") as file:
+            for i, line in enumerate(file.read().splitlines()):
+                line = line.strip()
+                if line and line[0] != "=":
+                    tokens = tokenizer(line)
+                    tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
+                    data.append(tokens)
+
+        with open(data_path_2, "r") as file:
             for i, line in enumerate(file.read().splitlines()):
                 line = line.strip()
                 if line and line[0] != "=":
@@ -63,7 +80,7 @@ class BigBrainDataset(Dataset):
 
 
 class UltraDuperBigBrainDataset(Dataset):
-    def __init__(self, data_path: str, max_length: int = MAX_LENGTH, n_bins=1):
+    def __init__(self, data_path_1: str, data_path_2: str, max_length: int = MAX_LENGTH, n_bins=1):
         self.max_length = max_length
 
         tokenizer = get_tokenizer("basic_english")
@@ -71,7 +88,16 @@ class UltraDuperBigBrainDataset(Dataset):
         data = []
         lengths = []
 
-        with open(data_path, "r") as file:
+        with open(data_path_1, "r") as file:
+            for i, line in enumerate(file.read().splitlines()):
+                line = line.strip()
+                if line and line[0] != "=":
+                    tokens = tokenizer(line)
+                    tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
+                    data.append(tokens)
+                    lengths.append(len(tokens))
+
+        with open(data_path_2, "r") as file:
             for i, line in enumerate(file.read().splitlines()):
                 line = line.strip()
                 if line and line[0] != "=":
@@ -93,8 +119,8 @@ class UltraDuperBigBrainDataset(Dataset):
 
 class UltraDuperBigBrainSampler(torch.utils.data.Sampler):
 
-    def __init__(self, lengths, max_length: int = MAX_LENGTH, n_bins: int = 1,
-                 shuffle=True, batch_size=16, drop_last=True):
+    def __init__(self, lengths: List[int], max_length: int = MAX_LENGTH, n_bins: int = 1,
+                 shuffle: bool = True, batch_size: int = 64, drop_last:bool = True):
 
         self.n_bins = n_bins
         self.shuffle = shuffle

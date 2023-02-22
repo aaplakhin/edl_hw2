@@ -18,7 +18,7 @@ class DataMode(Enum):
 
 
 class GPT_2(nn.Module):
-    def __init__(self, vocab_size=226783):
+    def __init__(self, vocab_size=595959):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, 1024)
         self.positional = PositionalEncoding(1024)
@@ -42,11 +42,12 @@ def yield_tokens(data_iter):
 
 def run_epoch(data_mode: DataMode, n_bins: int = 1):
     if data_mode.name == 'BRAIN':
-        dataset = BrainDataset("wikitext-103/wiki.train.tokens")
+        dataset = BrainDataset("wikitext-103/wiki.valid.tokens", "wikitext-103/wiki.test.tokens")
     elif data_mode.name == 'BIG_BRAIN':
-        dataset = BigBrainDataset("wikitext-103/wiki.train.tokens")
+        dataset = BigBrainDataset("wikitext-103/wiki.valid.tokens", "wikitext-103/wiki.test.tokens")
     else:
-        dataset = UltraDuperBigBrainDataset('wikitext-103/wiki.train.tokens', n_bins=n_bins)
+        dataset = UltraDuperBigBrainDataset("wikitext-103/wiki.valid.tokens",
+                                            "wikitext-103/wiki.test.tokens", n_bins=n_bins)
 
     vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", "<eos>", '<pad>'])
     vocab.set_default_index(vocab["<pad>"])
@@ -65,7 +66,6 @@ def run_epoch(data_mode: DataMode, n_bins: int = 1):
     else:
         sampler = UltraDuperBigBrainSampler(dataset.lengths, batch_size=BATCH_SIZE, n_bins=dataset.n_bins)
         dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_sampler=sampler)
-
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 

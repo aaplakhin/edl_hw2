@@ -7,7 +7,7 @@ from torch import nn
 from torchtext.vocab import build_vocab_from_iterator
 from torch.utils.data import DataLoader
 
-from dataset import BrainDataset, BigBrainDataset, UltraDuperBigBrainDataset, MyCollator
+from dataset import BrainDataset, BigBrainDataset, UltraDuperBigBrainDataset, UltraDuperBigBrainSampler, MyCollator
 from transformer import PositionalEncoding
 
 
@@ -40,14 +40,13 @@ def yield_tokens(data_iter):
         yield tokens
 
 
-def run_epoch(data_mode: DataMode):
+def run_epoch(data_mode: DataMode, n_bins: int = 1):
     if data_mode.name == 'BRAIN':
         dataset = BrainDataset("wikitext-103/wiki.train.tokens")
     elif data_mode.name == 'BIG_BRAIN':
         dataset = BigBrainDataset("wikitext-103/wiki.train.tokens")
     else:
-        pass
-    print(data_mode.name)
+        dataset = UltraDuperBigBrainDataset('wikitext-103/wiki.train.tokens', n_bins=n_bins)
 
     vocab = build_vocab_from_iterator(yield_tokens(iter(dataset)), specials=["<unk>", "<sos>", "<eos>", '<pad>'])
     vocab.set_default_index(vocab["<pad>"])
@@ -61,7 +60,12 @@ def run_epoch(data_mode: DataMode):
 
     collate_fn = MyCollator(text_pipeline, vocab["<pad>"])
 
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn, shuffle=True)
+    if data_mode.name in ['BRAIN', 'BIG_BRAIN']:
+        dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn, shuffle=True, drop_last=True)
+    else:
+        sampler = UltraDuperBigBrainSampler(dataset.lengths, batch_size=BATCH_SIZE, n_bins=dataset.n_bins)
+        dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_sampler=sampler)
+
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 

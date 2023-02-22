@@ -26,7 +26,7 @@ class BrainDataset(Dataset):
                     tokens += ['<pad>'] * (self.max_length - len(tokens) + 1)
                     data.append(tokens)
 
-        self.data = data[:10000]
+        self.data = data[:100000]
 
     def __len__(self):
         return len(self.data)
@@ -51,7 +51,7 @@ class BigBrainDataset(Dataset):
                     tokens = ['<sos>'] + tokens[:self.max_length - 1] + ['<eos>']
                     data.append(tokens)
 
-        self.data = data[:10000]
+        self.data = data[:100000]
 
     def __len__(self):
         return len(self.data)
@@ -78,8 +78,8 @@ class UltraDuperBigBrainDataset(Dataset):
                     data.append(tokens)
                     lengths.append(len(tokens))
 
-        self.data = data[:10000]
-        self.lengths = lengths[:10000]
+        self.data = data[:100000]
+        self.lengths = lengths[:100000]
         self.n_bins = n_bins
 
     def __len__(self):

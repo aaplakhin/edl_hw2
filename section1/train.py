@@ -8,23 +8,31 @@ from dataset import get_train_data
 
 
 class CustomScaler:
-    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", double_interval: int = 100):
+    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", zero_cutoff: int = 100):
         self.scale_factor = scale_factor
         self.counter = 0
         self.scaler_type = scaler_type
-        self.double_interval = double_interval
+        self.zero_cutoff = zero_cutoff
 
     def scale(self, loss):
         return loss * self.scale_factor
 
     def count_inf_grads(self, optimizer):
         inf_grads = 0
-        for g in optimizer.param_groups:
-            for p in g['params']:
-                if p.grad is not None:
-                    inf_grads += (torch.logical_not(torch.isfinite(p.grad))).sum().item()
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    inf_grads += (torch.logical_not(torch.isfinite(param.grad))).sum().item()
 
         return inf_grads
+
+    def count_zero_grads(self, optimizer):
+        zero_grads = 0
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    zero_grads += int(torch.count_nonzero(param.grad))
+        return zero_grads
 
     def unscale_grads(self, optimizer):
         for g in optimizer.param_groups:
@@ -33,23 +41,19 @@ class CustomScaler:
                     p.grad /= self.scale_factor
 
     def step(self, optimizer):
-
         if self.scaler_type == "dynamic":
             inf_grads = self.count_inf_grads(optimizer)
+            zero_grads = self.count_zero_grads(optimizer)
             if inf_grads > 0:
                 self.scale_factor /= 2
-                self.counter = 0
-            else:
-                self.counter += 1
-                if self.counter > self.double_interval:
-                    self.scale_factor *= 2
-                    self.counter = 0
+                return
+            elif zero_grads > self.zero_cutoff:
+                self.scale_factor *= 2
+                return
 
-                self.unscale_grads(optimizer)
-                optimizer.step()
-        else:
-            self.unscale_grads(optimizer)
-            optimizer.step()
+        self.unscale_grads(optimizer)
+        optimizer.step()
+
 
 
 def train_epoch(

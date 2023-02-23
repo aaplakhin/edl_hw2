@@ -17,7 +17,6 @@ class СustomScaler:
     def scale(self, loss):
         return loss * self.scale_factor
 
-    @staticmethod
     def count_inf_grads(optimizer):
         inf_grads = 0
         for g in optimizer.param_groups:

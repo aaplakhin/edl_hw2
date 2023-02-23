@@ -52,11 +52,11 @@ class CustomScaler:
         if self.scaler_type == "dynamic":
             total_grad = self.count_total_grads(optimizer)
             inf_grads_share = self.count_inf_grads(optimizer) / total_grad
-            zero_grads_shaer = self.count_zero_grads(optimizer) / total_grad
-            if inf_grads > 0:
+            zero_grads_share = self.count_zero_grads(optimizer) / total_grad
+            if inf_grads_share > 0:
                 self.scale_factor /= 2
                 return
-            elif zero_grads > self.zero_cutoff:
+            elif zero_grads_share > self.zero_cutoff_share:
                 self.scale_factor *= 2
 
         self.unscale_grads(optimizer)

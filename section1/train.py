@@ -60,8 +60,12 @@ def train_epoch(
         optimizer: torch.optim.Optimizer,
         device: torch.device,
         scaler
-) -> None:
+):
     model.train()
+    acc_list = []
+    loss_list = []
+    scale_factors_list = []
+
 
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))
     for i, (images, labels) in pbar:
@@ -75,12 +79,16 @@ def train_epoch(
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         optimizer.zero_grad()
-        print(scaler.scale_factor)
+        scale_factors_list.append(scaler.scale_factor)
 
         accuracy = ((outputs > 0.5) == labels).float().mean()
 
+        acc_list.append(accuracy)
+        loss_list.append(loss.item())
+
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
 
+        return acc_list, loss_list, scale_factors_list
 
 def train(scaler):
     device = torch.device("cuda:0")

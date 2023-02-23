@@ -83,10 +83,10 @@ def train_epoch(
 
         accuracy = ((outputs > 0.5) == labels).float().mean()
 
-        acc_list.append(accuracy)
-        loss_list.append(loss.item())
-
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
+
+    acc_list.append(accuracy.item())
+    loss_list.append(loss.item())
 
     return acc_list, loss_list, scale_factors_list
 

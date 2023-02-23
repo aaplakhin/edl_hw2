@@ -7,7 +7,7 @@ from unet import Unet
 from dataset import get_train_data
 
 
-class СustomScaler:
+class CustomScaler:
     def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", double_interval: int = 100):
         self.scale_factor = scale_factor
         self.counter = 0

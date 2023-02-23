@@ -88,7 +88,7 @@ def train_epoch(
 
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
 
-        return acc_list, loss_list, scale_factors_list
+    return acc_list, loss_list, scale_factors_list
 
 
 def train(scaler):
@@ -107,6 +107,6 @@ def train(scaler):
         acc, loss, scale_factors = train_epoch(train_loader, model, criterion, optimizer, device=device, scaler=scaler)
         acc_list += acc
         loss_list += loss
-        scale_factors_list += scale_factors_list
+        scale_factors_list += scale_factors
 
     return acc_list, loss_list, scale_factors_list

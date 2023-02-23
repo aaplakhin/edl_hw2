@@ -48,6 +48,10 @@ class CustomScaler:
                 self.scale_factor /= 2
                 return
             elif zero_grads > self.zero_cutoff:
+
+                self.unscale_grads(optimizer)
+                optimizer.step()
+
                 self.scale_factor *= 2
                 return
 

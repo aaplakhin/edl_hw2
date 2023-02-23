@@ -8,11 +8,11 @@ from dataset import get_train_data
 
 
 class CustomScaler:
-    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", zero_cutoff: int = 100):
+    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", zero_cutoff_share: int = 0.0001):
         self.scale_factor = scale_factor
         self.counter = 0
         self.scaler_type = scaler_type
-        self.zero_cutoff = zero_cutoff
+        self.zero_cutoff_share = zero_cutoff_share
 
     def scale(self, loss):
         return loss * self.scale_factor
@@ -34,6 +34,14 @@ class CustomScaler:
                     zero_grads += int(torch.count_nonzero(param.grad))
         return zero_grads
 
+    def count_total_grads(self, optimizer):
+        total_grads = 0
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    total_grads += param.grad.isnumel()
+        return total_grads
+
     def unscale_grads(self, optimizer):
         for g in optimizer.param_groups:
             for p in g['params']:
@@ -42,8 +50,9 @@ class CustomScaler:
 
     def step(self, optimizer):
         if self.scaler_type == "dynamic":
-            inf_grads = self.count_inf_grads(optimizer)
-            zero_grads = self.count_zero_grads(optimizer)
+            total_grad = self.count_total_grads(optimizer)
+            inf_grads_share = self.count_inf_grads(optimizer) / total_grad
+            zero_grads_shaer = self.count_zero_grads(optimizer) / total_grad
             if inf_grads > 0:
                 self.scale_factor /= 2
                 return

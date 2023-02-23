@@ -39,7 +39,7 @@ class CustomScaler:
         for group in optimizer.param_groups:
             for param in group['params']:
                 if param.grad is not None:
-                    total_grads += param.grad.isnumel()
+                    total_grads += param.grad.numel()
         return total_grads
 
     def unscale_grads(self, optimizer):

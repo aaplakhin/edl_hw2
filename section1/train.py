@@ -17,7 +17,7 @@ class СustomScaler:
     def scale(self, loss):
         return loss * self.scale_factor
 
-    def count_inf_grads(optimizer):
+    def count_inf_grads(self, optimizer):
         inf_grads = 0
         for g in optimizer.param_groups:
             for p in g['params']:
@@ -64,9 +64,7 @@ def train_epoch(
     loss_list = []
     scale_factors_list = []
 
-
     model.train()
-
 
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))
     for i, (images, labels) in pbar:

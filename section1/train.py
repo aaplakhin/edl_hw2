@@ -61,10 +61,12 @@ def train_epoch(
         device: torch.device,
         scaler
 ):
-    model.train()
     acc_list = []
     loss_list = []
     scale_factors_list = []
+
+
+    model.train()
 
 
     pbar = tqdm(enumerate(train_loader), total=len(train_loader))
@@ -89,6 +91,7 @@ def train_epoch(
         pbar.set_description(f"Loss: {round(loss.item(), 4)} " f"Accuracy: {round(accuracy.item() * 100, 4)}")
 
         return acc_list, loss_list, scale_factors_list
+
 
 def train(scaler):
     device = torch.device("cuda:0")

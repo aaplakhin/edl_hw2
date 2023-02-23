@@ -8,10 +8,11 @@ from dataset import get_train_data
 
 
 class СustomScaler:
-    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic"):
+    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", double_interval: int = 100):
         self.scale_factor = scale_factor
         self.counter = 0
         self.scaler_type = scaler_type
+        self.double_interval = double_interval
 
     def scale(self, loss):
         return loss * self.scale_factor
@@ -41,7 +42,7 @@ class СustomScaler:
                 self.counter = 0
             else:
                 self.counter += 1
-                if self.counter > 10:
+                if self.counter > self.double_interval:
                     self.scale_factor *= 2
                     self.counter = 0
 

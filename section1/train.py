@@ -40,12 +40,11 @@ class CustomScaler:
             else:
                 self.counter += 1
                 if self.counter > self.double_interval:
-
-                    self.unscale_grads(optimizer)
-                    optimizer.step()
-
                     self.scale_factor *= 2
                     self.counter = 0
+
+                self.unscale_grads(optimizer)
+                optimizer.step()
         else:
             self.unscale_grads(optimizer)
             optimizer.step()

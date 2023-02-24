@@ -81,7 +81,7 @@ def main():
         run_epoch(model, train_loader, criterion, optimizer)
 
     table = profiler.key_averages().table(row_limit=500)
-    with open('optimal_profiler.txt', 'w') as f:
+    with open(f'{Settings.model_type}_profiler.txt', 'w') as f:
         f.write(table)
 
     profiler.export_chrome_trace("trace.json")

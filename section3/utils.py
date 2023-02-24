@@ -26,7 +26,7 @@ class Settings:
     gamma: float = 0.7
     seed: int = 42
     device: str = get_device()
-    model_type: str = 'optimal'
+    model_type: str = 'suboptimal'
 
 
 class CatsAndDogs:

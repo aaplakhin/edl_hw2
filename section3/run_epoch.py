@@ -79,7 +79,13 @@ def main():
     with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
                  profile_memory=True, record_shapes=True) as profiler:
         run_epoch(model, train_loader, criterion, optimizer)
-        return profiler
+
+    table = profiler.key_averages().table(row_limit=500)
+    with open('suboptimal_profiler.txt', 'w') as f:
+        f.write(table)
+
+    profiler.export_chrome_trace("trace.json")
+    print(table)
 
 
 if __name__ == "__main__":

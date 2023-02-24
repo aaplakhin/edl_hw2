@@ -18,15 +18,16 @@ def pair(t):
 class PreNorm(nn.Module):
     def __init__(self, dim, fn):
         super().__init__()
-        self.norm = nn.BatchNorm1d(dim)
+        #self.norm = nn.BatchNorm1d(dim)
         self.fn = fn
+        self.norm = nn.LayerNorm(dim)
 
     def forward(self, x, **kwargs):
         with record_function('PreNorm'):
-            x = rearrange(x, "b l c -> b c l")
-            x = self.norm(x)
-            x = rearrange(x, "b c l -> b l c")
-            return self.fn(x, **kwargs)
+            #x = rearrange(x, "b l c -> b c l")
+            #x = self.norm(x)
+            #x = rearrange(x, "b c l -> b l c")
+            return self.fn(self.norm(x), **kwargs)
 
 
 class FeedForward(nn.Module):
@@ -59,25 +60,31 @@ class Attention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
         # ˁ ुᴗ_ᴗ)ु.｡oO
-        self.queries = nn.Linear(dim, inner_dim, bias=False)
-        self.keys = nn.Linear(dim, inner_dim, bias=False)
-        self.values = nn.Linear(dim, inner_dim, bias=False)
+        #self.queries = nn.Linear(dim, inner_dim, bias=False)
+        #self.keys = nn.Linear(dim, inner_dim, bias=False)
+        #self.values = nn.Linear(dim, inner_dim, bias=False)
+        self.qkv = nn.Linear(dim, inner_dim * 3, bias=False)
 
         self.to_out = nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout)) if project_out else nn.Identity()
 
     def forward(self, x):
-        with record_function('Self-Attention Layer'):
-            q = self.queries(x)
-            k = self.keys(x)
-            v = self.values(x)
+        #q = self.queries(x)
+        #k = self.keys(x)
+        #v = self.values(x)
 
-            # 〈╭☞• ⍛•〉╭☞
+        # 〈╭☞• ⍛•〉╭☞
+        with record_function('Self-Attention Layer'):
+            qkv = self.qkv(x).chunk(3, dim=-1)
+            q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv)
+
             dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
 
             attn = self.attend(dots)
             attn = self.dropout(attn)
 
             out = torch.matmul(attn, v)
+
+            out = rearrange(out, 'b h n d -> b n (h d)')
 
             return self.to_out(out)
 
@@ -147,7 +154,8 @@ class ViT(nn.Module):
         self.pool = pool
         self.to_latent = nn.Identity()
 
-        self.mlp_head = nn.Sequential(nn.BatchNorm1d(dim), nn.Linear(dim, num_classes))
+        #self.mlp_head = nn.Sequential(nn.BatchNorm1d(dim), nn.Linear(dim, num_classes))
+        self.mlp_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
 
     def forward(self, img):
         with record_function("Embedding Layer"):

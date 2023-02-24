@@ -4,24 +4,39 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.profiler import ProfilerActivity, profile, record_function
 from tqdm.notebook import tqdm
 
 import dataset
 from utils import Settings
 from vit import ViT as SubOptimalViT
+from fixed_vit import ViT as FixedViT
 
 
 def get_vit_model() -> torch.nn.Module:
-    model = SubOptimalViT(
-        dim=128,
-        mlp_dim=128,
-        depth=12,
-        heads=8,
-        image_size=224,
-        patch_size=32,
-        num_classes=2,
-        channels=3,
-    ).to(Settings.device)
+    if Settings.model_type == 'suboptimal':
+        model = SubOptimalViT(
+            dim=128,
+            mlp_dim=128,
+            depth=12,
+            heads=8,
+            image_size=224,
+            patch_size=32,
+            num_classes=2,
+            channels=3,
+        ).to(Settings.device)
+    else:
+        model = FixedViT(
+            dim=128,
+            mlp_dim=128,
+            depth=12,
+            heads=8,
+            image_size=224,
+            patch_size=32,
+            num_classes=2,
+            channels=3,
+        ).to(Settings.device)
+
     return model
 
 
@@ -40,11 +55,13 @@ def run_epoch(model, train_loader, criterion, optimizer) -> tp.Tuple[float, floa
     for i, (data, label) in tqdm(enumerate(train_loader), desc=f"[Train]"):
         data = data.to(Settings.device)
         label = label.to(Settings.device)
-        output = model(data)
+        with record_function('model forward'):
+            output = model(data)
         loss = criterion(output, label)
 
         optimizer.zero_grad()
-        loss.backward()
+        with record_function('backward'):
+            loss.backward()
         optimizer.step()
 
         acc = (output.argmax(dim=1) == label).float().mean()
@@ -59,7 +76,10 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=Settings.lr)
 
-    run_epoch(model, train_loader, criterion, optimizer)
+    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+                 profile_memory=True, record_shapes=True) as profiler:
+        run_epoch(model, train_loader, criterion, optimizer)
+        return profiler
 
 
 if __name__ == "__main__":

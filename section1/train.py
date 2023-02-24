@@ -53,6 +53,66 @@ class CustomScaler:
             optimizer.step()
 
 
+"""
+class CustomScaler:
+    def __init__(self, scale_factor: float = 2 ** 10, scaler_type: str = "dynamic", zero_cutoff_share: int = 0.0001):
+        self.scale_factor = scale_factor
+        self.counter = 0
+        self.scaler_type = scaler_type
+        self.zero_cutoff_share = zero_cutoff_share
+
+    def scale(self, loss):
+        return loss * self.scale_factor
+
+    def count_inf_grads(self, optimizer):
+        inf_grads = 0
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    inf_grads += (torch.logical_not(torch.isfinite(param.grad))).sum().item()
+        return inf_grads
+
+    def count_zero_grads(self, optimizer):
+        zero_grads = 0
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    zero_grads += int(torch.count_nonzero(param.grad))
+        return zero_grads
+
+    def count_total_grads(self, optimizer):
+        total_grads = 0
+        for group in optimizer.param_groups:
+            for param in group['params']:
+                if param.grad is not None:
+                    total_grads += param.grad.isnumel()
+        return total_grads
+
+
+def unscale_grads(self, optimizer):
+    for g in optimizer.param_groups:
+        for p in g['params']:
+            if p.grad is not None:
+                p.grad /= self.scale_factor
+
+
+def step(self, optimizer):
+    if self.scaler_type == "dynamic":
+        total_grad = self.count_total_grads(optimizer)
+        inf_grads_share = self.count_inf_grads(optimizer) / total_grad
+        zero_grads_share = self.count_zero_grads(optimizer) / total_grad
+        if inf_grads_share > 0:
+            self.scale_factor /= 2
+            return
+        elif zero_grads_share > self.zero_cutoff_share:
+            self.unscale_grads(optimizer)
+            optimizer.step()
+            self.scale_factor *= 2
+            return
+    self.unscale_grads(optimizer)
+    optimizer.step()
+"""
+
 def train_epoch(
 
         train_loader: torch.utils.data.DataLoader,
